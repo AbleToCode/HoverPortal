@@ -20,12 +20,14 @@ public partial class MainWindow : Window
 {
     private PreviewWindow? _previewWindow;
     private MainViewModel? _viewModel;
+    private TrayIconService? _trayIconService;
     
     public MainWindow()
     {
         InitializeComponent();
         
         Loaded += MainWindow_Loaded;
+        Closing += MainWindow_Closing;
         Closed += MainWindow_Closed;
     }
     
@@ -43,22 +45,23 @@ public partial class MainWindow : Window
     }
     
     /// <summary>
-    /// 关闭按钮点击
+    /// 关闭按钮点击 - 隐藏到托盘
     /// </summary>
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        Close();
+        // 隐藏到托盘而不是关闭
+        _trayIconService?.HideToTray();
     }
     
     /// <summary>
-    /// 最小化按钮点击
+    /// 最小化按钮点击 - 最小化到任务栏
     /// </summary>
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState.Minimized;
     }
     
-    // ===== 原有逻辑 =====
+    // ===== 生命周期 =====
     
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
@@ -72,6 +75,26 @@ public partial class MainWindow : Window
         // 创建预览窗口 (隐藏状态)
         _previewWindow = new PreviewWindow();
         _previewWindow.Hide();
+        
+        // 初始化托盘图标服务
+        _trayIconService = new TrayIconService(this);
+        _trayIconService.RequestOpenSettings += () =>
+        {
+            _viewModel?.OpenSettingsCommand.Execute(null);
+        };
+    }
+    
+    /// <summary>
+    /// 窗口关闭中 - 判断是否真正关闭还是隐藏
+    /// </summary>
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // 如果不是通过托盘退出，则取消关闭并隐藏到托盘
+        if (_trayIconService != null && !_trayIconService.IsExiting)
+        {
+            e.Cancel = true;
+            _trayIconService.HideToTray();
+        }
     }
     
     private void MainWindow_Closed(object? sender, EventArgs e)
@@ -83,6 +106,7 @@ public partial class MainWindow : Window
         }
         
         _previewWindow?.Close();
+        _trayIconService?.Dispose();
     }
     
     /// <summary>

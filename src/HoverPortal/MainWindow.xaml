@@ -56,6 +56,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     
                     <!-- Title (左侧) -->
@@ -69,11 +70,11 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
                     
-                    <!-- Settings Button (右侧) -->
+                    <!-- Settings Button -->
                     <Button Grid.Column="1"
                             Command="{Binding OpenSettingsCommand}"
                             ToolTip="设置"
-                            Margin="0,0,8,0"
+                            Margin="0,0,4,0"
                             Width="28" Height="28"
                             Cursor="Hand"
                             BorderThickness="0">
@@ -96,11 +97,41 @@
                         </Button.Template>
                     </Button>
                     
-                    <!-- Close Button (最右侧) -->
+                    <!-- Minimize Button (最小化) -->
                     <Button Grid.Column="2"
+                            ToolTip="最小化"
+                            Click="MinimizeButton_Click"
+                            Margin="0,0,4,0"
+                            Width="28" Height="28"
+                            Cursor="Hand"
+                            BorderThickness="0">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bd" 
+                                        Background="Transparent"
+                                        CornerRadius="6">
+                                    <TextBlock Text="−" 
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource SecondaryTextBrush}"
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"
+                                               Margin="0,-4,0,0"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="#10000000"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    
+                    <!-- Close Button (隐藏到托盘) -->
+                    <Button Grid.Column="3"
                             Style="{StaticResource CloseButton}"
                             Click="CloseButton_Click"
-                            ToolTip="关闭"/>
+                            ToolTip="隐藏到托盘"/>
                 </Grid>
             </Border>
 
