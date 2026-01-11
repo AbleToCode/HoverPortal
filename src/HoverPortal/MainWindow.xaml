@@ -1,0 +1,314 @@
+﻿<Window x:Class="HoverPortal.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:HoverPortal.ViewModels"
+        mc:Ignorable="d"
+        Title="HoverPortal" 
+        Height="420" Width="440"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/SettingsStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- Main Container with Shadow -->
+    <Border Background="{StaticResource BackgroundBrush}"
+            CornerRadius="12"
+            Margin="16">
+        <Border.Effect>
+            <DropShadowEffect Color="#40000000" 
+                              BlurRadius="32" 
+                              ShadowDepth="8"
+                              Direction="270"/>
+        </Border.Effect>
+        
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <!-- ========== Custom Title Bar ========== -->
+            <Border Grid.Row="0" 
+                    Padding="20,16"
+                    Background="{StaticResource BackgroundBrush}"
+                    CornerRadius="12,12,0,0"
+                    BorderBrush="{StaticResource SeparatorBrush}"
+                    BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Title (左侧) -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🚀" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="HoverPortal" 
+                                   FontFamily="{StaticResource PrimaryFont}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <!-- Settings Button (右侧) -->
+                    <Button Grid.Column="1"
+                            Command="{Binding OpenSettingsCommand}"
+                            ToolTip="设置"
+                            Margin="0,0,8,0"
+                            Width="28" Height="28"
+                            Cursor="Hand"
+                            BorderThickness="0">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bd" 
+                                        Background="Transparent"
+                                        CornerRadius="6">
+                                    <TextBlock Text="⚙️" 
+                                               FontSize="16"
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="#10000000"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    
+                    <!-- Close Button (最右侧) -->
+                    <Button Grid.Column="2"
+                            Style="{StaticResource CloseButton}"
+                            Click="CloseButton_Click"
+                            ToolTip="关闭"/>
+                </Grid>
+            </Border>
+
+            <!-- ========== Content Area ========== -->
+            <ScrollViewer Grid.Row="1" 
+                          VerticalScrollBarVisibility="Auto"
+                          Padding="20,16">
+                <StackPanel>
+                    
+                    <!-- Status Section -->
+                    <Border Style="{StaticResource SectionCard}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Status Indicator -->
+                            <Border Grid.Column="0" 
+                                    Width="10" Height="10" 
+                                    CornerRadius="5"
+                                    Margin="0,0,12,0"
+                                    VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{StaticResource SecondaryTextBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                            
+                            <!-- Status Text -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="运行状态" 
+                                           Style="{StaticResource SettingLabel}"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding StatusMessage}" 
+                                           Style="{StaticResource SettingDescription}"/>
+                            </StackPanel>
+                            
+                            <!-- Icon Count Badge -->
+                            <Border Grid.Column="2" 
+                                    Background="{StaticResource AccentBrush}"
+                                    CornerRadius="12"
+                                    Padding="12,6"
+                                    VerticalAlignment="Center">
+                                <TextBlock>
+                                    <Run Text="{Binding IconCount, Mode=OneWay}" 
+                                         FontWeight="Bold" Foreground="White"/>
+                                    <Run Text=" 图标" Foreground="White"/>
+                                </TextBlock>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Hover Delay Section -->
+                    <TextBlock Text="悬停设置" Style="{StaticResource SectionTitle}"/>
+                    <Border Style="{StaticResource SectionCard}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Row="0" Grid.Column="0">
+                                <TextBlock Text="触发延迟" Style="{StaticResource SettingLabel}"/>
+                                <TextBlock Text="鼠标悬停多久后显示预览" Style="{StaticResource SettingDescription}"/>
+                            </StackPanel>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding HoverThresholdMs, StringFormat={}{0} ms}"
+                                       FontFamily="{StaticResource PrimaryFont}"
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       VerticalAlignment="Center"/>
+                            
+                            <Slider Grid.Row="1" Grid.ColumnSpan="2"
+                                    Style="{StaticResource AppleSlider}"
+                                    Minimum="100" Maximum="1000"
+                                    Value="{Binding HoverThresholdMs}"
+                                    TickFrequency="50"
+                                    IsSnapToTickEnabled="True"
+                                    Margin="0,12,0,0"/>
+                        </Grid>
+                    </Border>
+                    
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ========== Footer Action Buttons ========== -->
+            <Border Grid.Row="2" 
+                    Padding="20,16"
+                    BorderBrush="{StaticResource SeparatorBrush}"
+                    BorderThickness="0,1,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Refresh Button -->
+                    <Button Grid.Column="0"
+                            Content="🔄 刷新图标"
+                            Style="{StaticResource AppleSecondaryButton}"
+                            Command="{Binding RefreshIconsCommand}"
+                            HorizontalAlignment="Left"/>
+                    
+                    <!-- Stop Button -->
+                    <Button Grid.Column="1"
+                            Content="停止"
+                            Command="{Binding StopCommand}"
+                            Margin="0,0,12,0"
+                            Padding="20,8"
+                            Height="38"
+                            FontFamily="{StaticResource PrimaryFont}"
+                            FontSize="14"
+                            FontWeight="Medium"
+                            Cursor="Hand"
+                            BorderThickness="0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Background" Value="{StaticResource DangerBrush}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Bd"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="8"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Opacity" Value="0.9"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRunning}" Value="False">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    
+                    <!-- Start Button -->
+                    <Button Grid.Column="2"
+                            Content="▶ 启动监控"
+                            Command="{Binding StartCommand}"
+                            Padding="20,8"
+                            Height="38"
+                            FontFamily="{StaticResource PrimaryFont}"
+                            FontSize="14"
+                            FontWeight="Medium"
+                            Cursor="Hand"
+                            BorderThickness="0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Bd"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="8"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Opacity" Value="0.9"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
