@@ -72,10 +72,39 @@ public sealed class DesktopIconService : IDisposable
     }
     
     /// <summary>
+    /// 检查屏幕坐标是否在桌面 ListView 上
+    /// 防止在其他窗口上时误触发悬浮框
+    /// </summary>
+    public bool IsPointOnDesktop(int screenX, int screenY)
+    {
+        if (!IsListViewValid()) return false;
+        
+        // 获取鼠标位置下的窗口
+        var pt = new POINT { X = screenX, Y = screenY };
+        IntPtr hwnd = NativeMethods.WindowFromPoint(pt);
+        
+        if (hwnd == IntPtr.Zero) return false;
+        
+        // 检查是否是桌面 ListView 本身
+        if (hwnd == _listViewHandle) return true;
+        
+        // 检查窗口的根祖先是否是桌面 ListView
+        // GA_ROOT = 2: 获取窗口的根祖先
+        IntPtr root = NativeMethods.GetAncestor(hwnd, 2);
+        return root == _listViewHandle;
+    }
+    
+    /// <summary>
     /// 获取指定屏幕坐标下的文件夹图标
     /// </summary>
     public DesktopIconInfo? GetFolderIconAtPoint(int screenX, int screenY)
     {
+        // 首先检查鼠标是否真的在桌面上
+        if (!IsPointOnDesktop(screenX, screenY))
+        {
+            return null;
+        }
+        
         foreach (var kvp in _iconCache)
         {
             var icon = kvp.Value;
