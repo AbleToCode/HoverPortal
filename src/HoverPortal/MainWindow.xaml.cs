@@ -174,13 +174,21 @@ public partial class MainWindow : Window
             // 显示预览窗口 - 使用真实的文件夹路径
             string folderPath = icon.FilePath;
             
-            // 计算弹出窗口边界 (屏幕像素坐标) 用于悬停检测
+            // 计算合并的检测区域：包含图标 + 弹窗 + 安全边距
+            const int safetyMargin = 20; // 20像素安全边距
+            
+            // 合并图标区域和弹窗区域
+            int unionLeft = Math.Min(icon.Bounds.Left, (int)(left * dpiScaleX)) - safetyMargin;
+            int unionTop = Math.Min(icon.Bounds.Top, (int)(top * dpiScaleY)) - safetyMargin;
+            int unionRight = Math.Max(icon.Bounds.Right, (int)((left + 320) * dpiScaleX)) + safetyMargin;
+            int unionBottom = Math.Max(icon.Bounds.Bottom, (int)((top + 280) * dpiScaleY)) + safetyMargin;
+            
             var popupBounds = new RECT
             {
-                Left = (int)(left * dpiScaleX),
-                Top = (int)(top * dpiScaleY),
-                Right = (int)((left + 320) * dpiScaleX),
-                Bottom = (int)((top + 280) * dpiScaleY)
+                Left = unionLeft,
+                Top = unionTop,
+                Right = unionRight,
+                Bottom = unionBottom
             };
             
             Dispatcher.Invoke(() =>

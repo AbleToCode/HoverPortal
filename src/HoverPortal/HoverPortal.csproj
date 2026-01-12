@@ -21,4 +21,20 @@
     <Resource Include="Resources\app_icon.png" />
   </ItemGroup>
 
+  <!-- Release 发布优化配置 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- 调试符号：嵌入到 exe 中，不生成单独的 pdb -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    
+    <!-- 单文件发布优化 -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <!-- 自包含部署时启用压缩 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And '$(SelfContained)' == 'true'">
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
 </Project>
