@@ -1,0 +1,32 @@
+# Build results
+bin/
+obj/
+publish/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.csproj.user
+
+# Logs
+*.log
+*_log.txt
+build_*.txt
+error_log.txt
+
+# Archives / Release packages
+*.zip
+HoverPortal_V*/
+
+# NuGet
+packages/
+
+# IDE
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
