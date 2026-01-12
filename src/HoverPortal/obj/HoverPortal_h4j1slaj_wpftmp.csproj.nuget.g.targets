@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <Import Project="$(NuGetPackageRoot)microsoft.windows.cswin32\0.3.264\build\netstandard1.0\Microsoft.Windows.CsWin32.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.windows.cswin32\0.3.264\build\netstandard1.0\Microsoft.Windows.CsWin32.targets')" />
-    <Import Project="$(NuGetPackageRoot)communitytoolkit.mvvm\8.4.0\buildTransitive\CommunityToolkit.Mvvm.targets" Condition="Exists('$(NuGetPackageRoot)communitytoolkit.mvvm\8.4.0\buildTransitive\CommunityToolkit.Mvvm.targets')" />
-  </ImportGroup>
-</Project>
