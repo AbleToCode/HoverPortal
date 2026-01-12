@@ -94,6 +94,10 @@ public partial class MainWindow : Window
         {
             e.Cancel = true;
             _trayIconService.HideToTray();
+            
+            // 清理临时缓存以减少后台内存占用 (内存优化)
+            IconExtractor.ClearCache();
+            GC.Collect(2, GCCollectionMode.Optimized);
         }
     }
     

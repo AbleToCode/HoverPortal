@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -22,7 +23,10 @@ namespace HoverPortal.Services;
 public static class IconExtractor
 {
     // ===== 图标缓存 =====
+    private const int MaxCacheSize = 50; // LRU 缓存大小限制
     private static readonly ConcurrentDictionary<string, ImageSource?> _iconCache = new();
+    private static readonly Queue<string> _cacheOrder = new(); // LRU 淘汰顺序追踪
+    private static readonly object _cacheLock = new();
     
     // ===== P/Invoke 常量 =====
     private const uint SHGFI_ICON = 0x100;
@@ -85,7 +89,30 @@ public static class IconExtractor
         
         cacheKey = $"{cacheKey}_{(largeIcon ? "L" : "S")}";
         
-        return _iconCache.GetOrAdd(cacheKey, _ => ExtractIcon(path, isDirectory, largeIcon));
+        // LRU 缓存管理
+        if (_iconCache.TryGetValue(cacheKey, out var cachedIcon))
+        {
+            return cachedIcon;
+        }
+        
+        var icon = ExtractIcon(path, isDirectory, largeIcon);
+        
+        lock (_cacheLock)
+        {
+            // 超出限制时移除最旧条目
+            while (_iconCache.Count >= MaxCacheSize && _cacheOrder.Count > 0)
+            {
+                var oldestKey = _cacheOrder.Dequeue();
+                _iconCache.TryRemove(oldestKey, out _);
+            }
+            
+            if (_iconCache.TryAdd(cacheKey, icon))
+            {
+                _cacheOrder.Enqueue(cacheKey);
+            }
+        }
+        
+        return icon;
     }
     
     /// <summary>
@@ -145,6 +172,10 @@ public static class IconExtractor
     /// </summary>
     public static void ClearCache()
     {
-        _iconCache.Clear();
+        lock (_cacheLock)
+        {
+            _iconCache.Clear();
+            _cacheOrder.Clear();
+        }
     }
 }

@@ -73,7 +73,16 @@ public class TrayIconService : IDisposable
                 // 调整图标大小为16x16（标准托盘图标尺寸）
                 using var resized = new System.Drawing.Bitmap(bitmap, new System.Drawing.Size(16, 16));
                 var hIcon = resized.GetHicon();
-                _taskbarIcon!.Icon = System.Drawing.Icon.FromHandle(hIcon);
+                try
+                {
+                    // 复制图标以接管所有权 (dev-rules-1: 确保资源释放)
+                    _taskbarIcon!.Icon = (System.Drawing.Icon)System.Drawing.Icon.FromHandle(hIcon).Clone();
+                }
+                finally
+                {
+                    // 释放原生句柄
+                    DestroyIcon(hIcon);
+                }
                 return;
             }
         }
@@ -97,6 +106,9 @@ public class TrayIconService : IDisposable
         // 最终备选：默认系统图标
         _taskbarIcon!.Icon = System.Drawing.SystemIcons.Application;
     }
+    
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool DestroyIcon(IntPtr hIcon);
     
     private ContextMenu CreateStyledContextMenu()
     {
