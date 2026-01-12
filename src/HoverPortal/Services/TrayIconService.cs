@@ -4,9 +4,10 @@
 // ============================================================================
 
 using System;
-using System.Drawing;
 using System.Windows;
-using System.Windows.Forms;
+using System.Windows.Controls;
+using System.Windows.Resources;
+using Hardcodet.Wpf.TaskbarNotification;
 using Application = System.Windows.Application;
 
 namespace HoverPortal.Services;
@@ -17,7 +18,7 @@ namespace HoverPortal.Services;
 /// </summary>
 public class TrayIconService : IDisposable
 {
-    private NotifyIcon? _notifyIcon;
+    private TaskbarIcon? _taskbarIcon;
     private readonly Window _mainWindow;
     private bool _isExiting = false;
     
@@ -39,46 +40,134 @@ public class TrayIconService : IDisposable
     
     private void InitializeTrayIcon()
     {
-        // 创建托盘图标
-        _notifyIcon = new NotifyIcon
+        // 创建WPF风格的托盘图标
+        _taskbarIcon = new TaskbarIcon
         {
-            // 使用系统图标作为托盘图标
-            Icon = SystemIcons.Application,
-            Visible = true,
-            Text = "HoverPortal - 桌面悬浮预览"
+            ToolTipText = "HoverPortal - 桌面悬浮预览"
         };
         
-        // 创建右键菜单
-        var contextMenu = new ContextMenuStrip();
+        // 加载自定义图标
+        LoadCustomIcon();
         
-        // 显示主窗口
-        var showItem = new ToolStripMenuItem("显示主窗口");
+        // 创建WPF风格右键菜单
+        var contextMenu = CreateStyledContextMenu();
+        _taskbarIcon.ContextMenu = contextMenu;
+        
+        // 双击托盘图标显示主窗口
+        _taskbarIcon.TrayMouseDoubleClick += (s, e) => ShowMainWindow();
+    }
+    
+    private void LoadCustomIcon()
+    {
+        try
+        {
+            // 从嵌入式资源加载PNG并转换为Icon
+            var resourceUri = new Uri("pack://application:,,,/Resources/app_icon.png", UriKind.Absolute);
+            var streamInfo = Application.GetResourceStream(resourceUri);
+            
+            if (streamInfo != null)
+            {
+                using var stream = streamInfo.Stream;
+                using var bitmap = new System.Drawing.Bitmap(stream);
+                
+                // 调整图标大小为16x16（标准托盘图标尺寸）
+                using var resized = new System.Drawing.Bitmap(bitmap, new System.Drawing.Size(16, 16));
+                var hIcon = resized.GetHicon();
+                _taskbarIcon!.Icon = System.Drawing.Icon.FromHandle(hIcon);
+                return;
+            }
+        }
+        catch (Exception)
+        {
+            // 忽略加载错误，使用备选图标
+        }
+        
+        // 备选：使用程序关联图标
+        try
+        {
+            var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+            if (!string.IsNullOrEmpty(exePath))
+            {
+                _taskbarIcon!.Icon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+                return;
+            }
+        }
+        catch { }
+        
+        // 最终备选：默认系统图标
+        _taskbarIcon!.Icon = System.Drawing.SystemIcons.Application;
+    }
+    
+    private ContextMenu CreateStyledContextMenu()
+    {
+        var contextMenu = new ContextMenu();
+        
+        // 应用现代样式
+        if (Application.Current.TryFindResource("TrayContextMenuStyle") is Style menuStyle)
+        {
+            contextMenu.Style = menuStyle;
+        }
+        
+        // 显示主窗口 (粗体)
+        var showItem = new MenuItem
+        {
+            Header = "显示主窗口",
+            Icon = new TextBlock { Text = "🏠", FontSize = 14 }
+        };
+        if (Application.Current.TryFindResource("TrayMenuItemBoldStyle") is Style boldStyle)
+        {
+            showItem.Style = boldStyle;
+        }
         showItem.Click += (s, e) => ShowMainWindow();
-        showItem.Font = new Font(showItem.Font, System.Drawing.FontStyle.Bold);
         contextMenu.Items.Add(showItem);
         
-        contextMenu.Items.Add(new ToolStripSeparator());
+        // 分隔线
+        var separator1 = new Separator();
+        if (Application.Current.TryFindResource("TrayMenuSeparatorStyle") is Style separatorStyle)
+        {
+            separator1.Style = separatorStyle;
+        }
+        contextMenu.Items.Add(separator1);
         
         // 设置
-        var settingsItem = new ToolStripMenuItem("设置");
-        settingsItem.Click += (s, e) => 
+        var settingsItem = new MenuItem
+        {
+            Header = "设置",
+            Icon = new TextBlock { Text = "⚙️", FontSize = 14 }
+        };
+        if (Application.Current.TryFindResource("TrayMenuItemStyle") is Style itemStyle)
+        {
+            settingsItem.Style = itemStyle;
+        }
+        settingsItem.Click += (s, e) =>
         {
             ShowMainWindow();
             RequestOpenSettings?.Invoke();
         };
         contextMenu.Items.Add(settingsItem);
         
-        contextMenu.Items.Add(new ToolStripSeparator());
+        // 分隔线
+        var separator2 = new Separator();
+        if (Application.Current.TryFindResource("TrayMenuSeparatorStyle") is Style sepStyle2)
+        {
+            separator2.Style = sepStyle2;
+        }
+        contextMenu.Items.Add(separator2);
         
-        // 退出
-        var exitItem = new ToolStripMenuItem("退出");
+        // 退出 (红色)
+        var exitItem = new MenuItem
+        {
+            Header = "退出",
+            Icon = new TextBlock { Text = "🚪", FontSize = 14 }
+        };
+        if (Application.Current.TryFindResource("TrayMenuItemDangerStyle") is Style dangerStyle)
+        {
+            exitItem.Style = dangerStyle;
+        }
         exitItem.Click += (s, e) => ExitApplication();
         contextMenu.Items.Add(exitItem);
         
-        _notifyIcon.ContextMenuStrip = contextMenu;
-        
-        // 双击托盘图标显示主窗口
-        _notifyIcon.DoubleClick += (s, e) => ShowMainWindow();
+        return contextMenu;
     }
     
     /// <summary>
@@ -113,18 +202,17 @@ public class TrayIconService : IDisposable
     /// <summary>
     /// 显示托盘气泡通知
     /// </summary>
-    public void ShowBalloonTip(string title, string text, ToolTipIcon icon = ToolTipIcon.Info, int timeout = 3000)
+    public void ShowBalloonTip(string title, string text, BalloonIcon icon = BalloonIcon.Info, int timeout = 3000)
     {
-        _notifyIcon?.ShowBalloonTip(timeout, title, text, icon);
+        _taskbarIcon?.ShowBalloonTip(title, text, icon);
     }
     
     public void Dispose()
     {
-        if (_notifyIcon != null)
+        if (_taskbarIcon != null)
         {
-            _notifyIcon.Visible = false;
-            _notifyIcon.Dispose();
-            _notifyIcon = null;
+            _taskbarIcon.Dispose();
+            _taskbarIcon = null;
         }
     }
 }

@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "BckMhcFjrwf6L8DTu+w8CQBL8AFAqyOS3igDLLpW/AUZx+fOHH2k7/SEs39qDyheYhlGrgVyxMo6pX6ijg9LSw==",
+  "dgSpecHash": "BRZc7NwIxiMtfWxZQQdfsDbIUsEkMbwE8SybUlQ1zFVBX0JTLODbopYUOO19s2xMez9a5MOM6+W45SrnRm+DoA==",
   "success": true,
   "projectFilePath": "D:\\Desktop\\work_space\\HoverPortal\\src\\HoverPortal\\HoverPortal.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\UnableToCode\\.nuget\\packages\\communitytoolkit.mvvm\\8.4.0\\communitytoolkit.mvvm.8.4.0.nupkg.sha512",
+    "C:\\Users\\UnableToCode\\.nuget\\packages\\hardcodet.notifyicon.wpf\\1.1.0\\hardcodet.notifyicon.wpf.1.1.0.nupkg.sha512",
     "C:\\Users\\UnableToCode\\.nuget\\packages\\microsoft.windows.cswin32\\0.3.264\\microsoft.windows.cswin32.0.3.264.nupkg.sha512",
     "C:\\Users\\UnableToCode\\.nuget\\packages\\microsoft.windows.sdk.win32docs\\0.1.42-alpha\\microsoft.windows.sdk.win32docs.0.1.42-alpha.nupkg.sha512",
     "C:\\Users\\UnableToCode\\.nuget\\packages\\microsoft.windows.sdk.win32metadata\\68.0.4-preview\\microsoft.windows.sdk.win32metadata.68.0.4-preview.nupkg.sha512",

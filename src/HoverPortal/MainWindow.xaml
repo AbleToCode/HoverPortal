@@ -11,7 +11,8 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Icon="/Resources/app_icon.png">
     
     <Window.DataContext>
         <vm:MainViewModel />

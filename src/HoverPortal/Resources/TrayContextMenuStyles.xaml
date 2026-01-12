@@ -1,0 +1,114 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ================================================================== -->
+    <!-- HoverPortal Tray Context Menu Styles - Apple Design System          -->
+    <!-- Modern styled tray menu matching app theme                          -->
+    <!-- ================================================================== -->
+
+    <!-- ========== Tray Context Menu Container Style ========== -->
+    
+    <Style x:Key="TrayContextMenuStyle" TargetType="ContextMenu">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HasDropShadow" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border x:Name="MenuBorder"
+                            Background="#FFFFFF"
+                            CornerRadius="10"
+                            Padding="6"
+                            MinWidth="180">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#40000000" 
+                                              BlurRadius="24" 
+                                              ShadowDepth="6"
+                                              Direction="270"
+                                              Opacity="0.4"/>
+                        </Border.Effect>
+                        <StackPanel IsItemsHost="True"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ========== Tray Menu Item Style ========== -->
+    
+    <Style x:Key="TrayMenuItemStyle" TargetType="MenuItem">
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI, Microsoft YaHei UI"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#1D1D1F"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="ItemBorder"
+                            Background="Transparent"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Icon -->
+                            <ContentPresenter x:Name="IconContent"
+                                              Grid.Column="0"
+                                              Content="{TemplateBinding Icon}"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,10,0"/>
+                            
+                            <!-- Header Text -->
+                            <ContentPresenter Grid.Column="1"
+                                              ContentSource="Header"
+                                              VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="#EBEBEE"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="#DCDCE0"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ========== Bold Menu Item Style (Primary Action) ========== -->
+    
+    <Style x:Key="TrayMenuItemBoldStyle" TargetType="MenuItem" BasedOn="{StaticResource TrayMenuItemStyle}">
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <!-- ========== Danger Menu Item Style (Exit) ========== -->
+    
+    <Style x:Key="TrayMenuItemDangerStyle" TargetType="MenuItem" BasedOn="{StaticResource TrayMenuItemStyle}">
+        <Setter Property="Foreground" Value="#FF3B30"/>
+    </Style>
+
+    <!-- ========== Menu Separator Style ========== -->
+    
+    <Style x:Key="TrayMenuSeparatorStyle" TargetType="Separator">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Margin" Value="12,4"/>
+        <Setter Property="Background" Value="#E5E5EA"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{TemplateBinding Background}" 
+                            Height="{TemplateBinding Height}"
+                            Margin="{TemplateBinding Margin}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

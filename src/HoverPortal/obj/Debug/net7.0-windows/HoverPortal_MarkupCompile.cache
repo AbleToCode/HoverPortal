@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET7_0;NETCOREAPP
 D:\Desktop\work_space\HoverPortal\src\HoverPortal\App.xaml
-41058020803
+570453345
 
 192056774690
-208-498117566
-MainWindow.xaml;Resources\SettingsStyles.xaml;Views\PreviewWindow.xaml;Views\SettingsWindow.xaml;
+2091712875829
+MainWindow.xaml;Resources\SettingsStyles.xaml;Resources\TrayContextMenuStyles.xaml;Views\PreviewWindow.xaml;Views\SettingsWindow.xaml;
 
 False
 

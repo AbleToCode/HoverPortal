@@ -88,6 +88,9 @@ public partial class PreviewWindow : Window
         if (_isClosing) return;
         _isClosing = true;
         
+        // 清除导航历史
+        ViewModel.ClearNavigationHistory();
+        
         _hideStoryboard.Completed += (s, e) =>
         {
             if (_isClosing)

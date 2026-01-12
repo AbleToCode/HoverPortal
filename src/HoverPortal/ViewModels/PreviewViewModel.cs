@@ -4,6 +4,7 @@
 // ============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -29,6 +30,14 @@ public partial class PreviewViewModel : ObservableObject
     
     [ObservableProperty]
     private bool _isEmpty = true;
+    
+    [ObservableProperty]
+    private bool _canGoBack;
+    
+    /// <summary>
+    /// 导航历史栈
+    /// </summary>
+    private readonly Stack<string> _navigationHistory = new();
     
     /// <summary>
     /// 文件列表
@@ -94,12 +103,8 @@ public partial class PreviewViewModel : ObservableObject
         {
             if (item.IsDirectory)
             {
-                // 打开资源管理器
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = item.FullPath,
-                    UseShellExecute = true
-                });
+                // 导航到子文件夹
+                NavigateToFolder(item.FullPath);
             }
             else
             {
@@ -138,5 +143,45 @@ public partial class PreviewViewModel : ObservableObject
         {
             Debug.WriteLine($"Failed to open explorer: {ex.Message}");
         }
+    }
+    
+    /// <summary>
+    /// 导航到指定文件夹（保存历史）
+    /// </summary>
+    public void NavigateToFolder(string path)
+    {
+        // 保存当前路径到历史栈
+        if (!string.IsNullOrEmpty(FolderPath))
+        {
+            _navigationHistory.Push(FolderPath);
+        }
+        
+        // 加载新文件夹
+        LoadFolder(path);
+        
+        // 更新返回按钮状态
+        CanGoBack = _navigationHistory.Count > 0;
+    }
+    
+    /// <summary>
+    /// 返回上级目录
+    /// </summary>
+    [RelayCommand]
+    private void GoBack()
+    {
+        if (_navigationHistory.Count == 0) return;
+        
+        var previousPath = _navigationHistory.Pop();
+        LoadFolder(previousPath);
+        CanGoBack = _navigationHistory.Count > 0;
+    }
+    
+    /// <summary>
+    /// 清除导航历史（窗口隐藏时调用）
+    /// </summary>
+    public void ClearNavigationHistory()
+    {
+        _navigationHistory.Clear();
+        CanGoBack = false;
     }
 }

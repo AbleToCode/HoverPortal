@@ -9,6 +9,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/SettingsStyles.xaml"/>
+                <ResourceDictionary Source="Resources/TrayContextMenuStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             
             <!-- 全局转换器 -->
