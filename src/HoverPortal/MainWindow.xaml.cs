@@ -65,6 +65,14 @@ public partial class MainWindow : Window
     
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        InitializeServices();
+    }
+    
+    /// <summary>
+    /// 初始化所有服务 (共用逻辑)
+    /// </summary>
+    private void InitializeServices()
+    {
         _viewModel = DataContext as MainViewModel;
         
         if (_viewModel != null)
@@ -82,6 +90,26 @@ public partial class MainWindow : Window
         {
             _viewModel?.OpenSettingsCommand.Execute(null);
         };
+    }
+    
+    /// <summary>
+    /// 静默启动 - 用于开机自启动场景
+    /// 不显示主窗口，直接初始化托盘图标和悬停检测
+    /// </summary>
+    public void StartSilently()
+    {
+        System.Diagnostics.Debug.WriteLine("[MainWindow] Starting silently...");
+        
+        // 手动初始化服务 (因为 Loaded 事件不会触发)
+        InitializeServices();
+        
+        // 自动开始监控
+        _viewModel?.StartCommand.Execute(null);
+        
+        // 隐藏到托盘
+        _trayIconService?.HideToTray();
+        
+        System.Diagnostics.Debug.WriteLine("[MainWindow] Silent startup complete, running in background");
     }
     
     /// <summary>

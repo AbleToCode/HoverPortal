@@ -2,10 +2,13 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    
+    <!-- 应用程序图标 -->
+    <ApplicationIcon>Resources\app_icon.ico</ApplicationIcon>
     
     <!-- 内存优化配置 -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
@@ -37,9 +40,18 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
-  <!-- 自包含部署时启用压缩 -->
+  <!-- 自包含部署 (SCD) 内存优化配置 -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release' And '$(SelfContained)' == 'true'">
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    
+    <!-- 禁用 ReadyToRun 以减少内存占用 (牺牲启动速度换取更低内存) -->
+    <PublishReadyToRun>false</PublishReadyToRun>
+    
+    <!-- 优化偏好：体积优先 -->
+    <OptimizationPreference>Size</OptimizationPreference>
+    
+    <!-- WPF 不支持 PublishTrimmed，已禁用 -->
+    <!-- <PublishTrimmed>true</PublishTrimmed> -->
   </PropertyGroup>
 
 </Project>

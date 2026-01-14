@@ -40,6 +40,11 @@ public partial class PreviewViewModel : ObservableObject
     private readonly Stack<string> _navigationHistory = new();
     
     /// <summary>
+    /// 初始目录路径（悬浮窗打开时的目录）
+    /// </summary>
+    private string? _initialFolderPath;
+    
+    /// <summary>
     /// 文件列表
     /// </summary>
     public ObservableCollection<FileItem> Files { get; } = new();
@@ -51,6 +56,12 @@ public partial class PreviewViewModel : ObservableObject
     {
         Files.Clear();
         FolderPath = path;
+        
+        // 记录初始目录（仅在首次加载时）
+        if (_initialFolderPath == null)
+        {
+            _initialFolderPath = path;
+        }
         FolderName = Path.GetFileName(path);
         
         if (string.IsNullOrEmpty(FolderName))
@@ -177,11 +188,35 @@ public partial class PreviewViewModel : ObservableObject
     }
     
     /// <summary>
+    /// 导航到父文件夹（文件系统层级）
+    /// 注意：在第一级目录（初始目录）时不允许返回到更上层
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToParent()
+    {
+        if (string.IsNullOrEmpty(FolderPath)) return;
+        
+        // 如果当前是初始目录且没有导航历史，则不允许返回
+        if (_navigationHistory.Count == 0 && 
+            string.Equals(FolderPath, _initialFolderPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+        
+        var parentDir = Directory.GetParent(FolderPath);
+        if (parentDir != null && parentDir.Exists)
+        {
+            NavigateToFolder(parentDir.FullName);
+        }
+    }
+    
+    /// <summary>
     /// 清除导航历史（窗口隐藏时调用）
     /// </summary>
     public void ClearNavigationHistory()
     {
         _navigationHistory.Clear();
+        _initialFolderPath = null;
         CanGoBack = false;
     }
 }

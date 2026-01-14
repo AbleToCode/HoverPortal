@@ -6,7 +6,7 @@
         xmlns:vm="clr-namespace:HoverPortal.ViewModels"
         mc:Ignorable="d"
         Title="HoverPortal" 
-        Height="420" Width="440"
+        Height="560" Width="440"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -227,6 +227,35 @@
                                     IsSnapToTickEnabled="True"
                                     Margin="0,12,0,0"/>
                         </Grid>
+                    </Border>
+                    
+                    <!-- Usage Tips Section -->
+                    <TextBlock Text="使用说明" Style="{StaticResource SectionTitle}"/>
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="🖱️" FontSize="16" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="单击进入文件夹" Style="{StaticResource SettingLabel}"/>
+                                    <TextBlock Text="点击悬浮窗中的图标打开文件或进入文件夹" Style="{StaticResource SettingDescription}"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="↩️" FontSize="16" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="右键返回上级" Style="{StaticResource SettingLabel}"/>
+                                    <TextBlock Text="在悬浮窗内右键点击可返回上一级目录" Style="{StaticResource SettingDescription}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
                     </Border>
                     
                 </StackPanel>

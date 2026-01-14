@@ -118,6 +118,9 @@ public partial class SettingsViewModel : ObservableObject
             _originalSettings = Settings.Clone();
             HasChanges = false;
             
+            // 更新开机自启动注册表
+            StartupManager.SetStartupEnabled(Settings.LaunchAtStartup);
+            
             StatusMessage = "设置已保存";
             
             // 通知设置已更新

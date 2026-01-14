@@ -37,6 +37,19 @@ public static class IconExtractor
     private const uint FILE_ATTRIBUTE_NORMAL = 0x80;
     private const uint FILE_ATTRIBUTE_DIRECTORY = 0x10;
     
+    /// <summary>
+    /// File types that have unique per-file icons (not extension-based)
+    /// These files embed or reference specific icons that differ for each file
+    /// </summary>
+    private static readonly HashSet<string> UniqueIconExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".lnk",  // Windows shortcuts - each has its target's icon
+        ".exe",  // Executables - each has embedded icon
+        ".url",  // URL shortcuts - each may have favicon
+        ".ico",  // Icon files - each is unique
+        ".scr"   // Screen savers - each has embedded icon
+    };
+    
     // ===== P/Invoke 结构体 =====
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct SHFILEINFO
@@ -73,7 +86,7 @@ public static class IconExtractor
     public static ImageSource? GetIcon(string path, bool isDirectory = false, bool largeIcon = true)
     {
         // 使用扩展名作为缓存键 (相同扩展名图标相同)
-        // 文件夹使用完整路径作为缓存键，因为每个文件夹可能有自定义图标
+        // 特殊文件类型（.lnk, .exe等）使用完整路径作为缓存键，因为每个文件有独立图标
         string cacheKey;
         if (isDirectory)
         {
@@ -82,9 +95,19 @@ public static class IconExtractor
         }
         else
         {
-            cacheKey = Path.GetExtension(path).ToLowerInvariant();
-            if (string.IsNullOrEmpty(cacheKey))
-                cacheKey = ".file";
+            var ext = Path.GetExtension(path);
+            if (UniqueIconExtensions.Contains(ext))
+            {
+                // 特殊文件类型使用完整路径作为缓存键
+                cacheKey = $"unique_{path}";
+            }
+            else
+            {
+                // 普通文件类型使用扩展名作为缓存键 (e.g., .txt, .pdf)
+                cacheKey = ext.ToLowerInvariant();
+                if (string.IsNullOrEmpty(cacheKey))
+                    cacheKey = ".file";
+            }
         }
         
         cacheKey = $"{cacheKey}_{(largeIcon ? "L" : "S")}";
@@ -124,9 +147,13 @@ public static class IconExtractor
         uint flags = SHGFI_ICON;
         flags |= largeIcon ? SHGFI_LARGEICON : SHGFI_SMALLICON;
         
-        // 仅对文件使用 SHGFI_USEFILEATTRIBUTES (更快但不能获取实际图标)
-        // 文件夹需要读取实际图标以支持自定义图标 (如 desktop.ini)
-        if (!isDirectory)
+        // 判断是否需要读取实际文件以获取其图标
+        var ext = Path.GetExtension(path);
+        bool needsActualFileIcon = isDirectory || UniqueIconExtensions.Contains(ext);
+        
+        // 仅对普通文件使用 SHGFI_USEFILEATTRIBUTES (更快但返回通用扩展名图标)
+        // 文件夹、快捷方式和可执行文件需要读取实际文件图标
+        if (!needsActualFileIcon)
         {
             flags |= SHGFI_USEFILEATTRIBUTES;
         }

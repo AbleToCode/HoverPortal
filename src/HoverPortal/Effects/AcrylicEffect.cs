@@ -32,8 +32,20 @@ public static class AcrylicHelper
 {
     // ===== DWM API 常量 =====
     private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+    private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
     private const int DWMWA_SYSTEMBACKDROP_TYPE = 38;
     private const int DWMWA_MICA_EFFECT = 1029;
+    
+    /// <summary>
+    /// 窗口圆角偏好 (Windows 11 22000+)
+    /// </summary>
+    private enum DWM_WINDOW_CORNER_PREFERENCE
+    {
+        DWMWCP_DEFAULT = 0,
+        DWMWCP_DONOTROUND = 1,
+        DWMWCP_ROUND = 2,
+        DWMWCP_ROUNDSMALL = 3
+    }
     
     // ===== SetWindowCompositionAttribute 结构 (Win10) =====
     private enum AccentState
@@ -91,7 +103,7 @@ public static class AcrylicHelper
         // 检查 Windows 版本
         var osVersion = Environment.OSVersion.Version;
         
-        if (osVersion.Build >= 22621) // Windows 11 22H2+
+        if (osVersion.Build >= 22000) // Windows 11+
         {
             return EnableWin11Backdrop(hwnd, useMica ? SystemBackdropType.MainWindow : SystemBackdropType.TransientWindow, isDarkMode);
         }
@@ -116,11 +128,15 @@ public static class AcrylicHelper
     {
         try
         {
-            // 启用暗色模式标题栏
+            // 1. 设置窗口圆角 (Windows 11 22000+)
+            int cornerPref = (int)DWM_WINDOW_CORNER_PREFERENCE.DWMWCP_ROUND;
+            DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref cornerPref, sizeof(int));
+            
+            // 2. 启用暗色模式标题栏
             int darkMode = isDarkMode ? 1 : 0;
             DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
             
-            // 设置背景类型
+            // 3. 设置背景类型
             int backdrop = (int)backdropType;
             int result = DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, ref backdrop, sizeof(int));
             
