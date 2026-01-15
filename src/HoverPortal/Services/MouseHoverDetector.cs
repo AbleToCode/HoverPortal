@@ -6,6 +6,7 @@
 // ============================================================================
 
 using System;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 using HoverPortal.Interop;
 
@@ -172,6 +173,26 @@ public sealed class MouseHoverDetector : IDisposable
     
     private void HandleMouseOnIcon(DesktopIconInfo icon, int screenX, int screenY)
     {
+        // 验证图标位置是否仍然有效 (检测图标是否被移动)
+        if (!_iconService.ValidateIconPosition(icon))
+        {
+            // 图标已移动，缓存已失效，异步刷新缓存
+            _ = RefreshCacheAsync();
+            // 重置当前悬停状态
+            if (_isHoverTriggered && _currentHoverIcon != null)
+            {
+                RaiseHoverStateChanged(
+                    _currentHoverIcon,
+                    screenX,
+                    screenY,
+                    DateTime.Now - _hoverStartTime,
+                    isHovering: false
+                );
+            }
+            ResetHoverState();
+            return;
+        }
+        
         // 检查是否是同一个图标
         if (_currentHoverIcon?.Index == icon.Index)
         {
@@ -206,6 +227,15 @@ public sealed class MouseHoverDetector : IDisposable
             _hoverStartTime = DateTime.Now;
             _isHoverTriggered = false;
         }
+    }
+    
+    /// <summary>
+    /// 异步刷新图标缓存
+    /// </summary>
+    private async Task RefreshCacheAsync()
+    {
+        await _iconService.RefreshIconCacheAsync();
+        System.Diagnostics.Debug.WriteLine("[MouseHoverDetector] Icon cache refreshed due to position change");
     }
     
     private void HandleMouseLeftIcon(int screenX, int screenY)

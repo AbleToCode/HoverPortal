@@ -196,9 +196,8 @@ public partial class PreviewViewModel : ObservableObject
     {
         if (string.IsNullOrEmpty(FolderPath)) return;
         
-        // 如果当前是初始目录且没有导航历史，则不允许返回
-        if (_navigationHistory.Count == 0 && 
-            string.Equals(FolderPath, _initialFolderPath, StringComparison.OrdinalIgnoreCase))
+        // 如果当前是初始目录，则不允许右键返回到更上层
+        if (string.Equals(FolderPath, _initialFolderPath, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -207,6 +206,13 @@ public partial class PreviewViewModel : ObservableObject
         if (parentDir != null && parentDir.Exists)
         {
             NavigateToFolder(parentDir.FullName);
+            
+            // 如果已返回到初始目录，清除导航历史使返回按钮消失
+            if (string.Equals(FolderPath, _initialFolderPath, StringComparison.OrdinalIgnoreCase))
+            {
+                _navigationHistory.Clear();
+                CanGoBack = false;
+            }
         }
     }
     

@@ -125,6 +125,138 @@ public sealed class DesktopIconService : IDisposable
     }
     
     /// <summary>
+    /// 验证图标位置是否仍然有效 (检测桌面图标是否被移动)
+    /// 如果图标已移动，则清除缓存并返回 false
+    /// </summary>
+    public bool ValidateIconPosition(DesktopIconInfo icon)
+    {
+        if (!IsListViewValid()) return false;
+        
+        try
+        {
+            // 获取图标的当前实际位置
+            var currentBounds = GetIconBoundsAtIndex(icon.Index);
+            if (currentBounds == null) return false;
+            
+            // 比较缓存的位置与当前实际位置
+            var cached = icon.Bounds;
+            var actual = currentBounds.Value;
+            
+            // 如果位置差异超过 5 像素，认为图标已被移动
+            const int tolerance = 5;
+            bool positionChanged = 
+                Math.Abs(cached.Left - actual.Left) > tolerance ||
+                Math.Abs(cached.Top - actual.Top) > tolerance ||
+                Math.Abs(cached.Right - actual.Right) > tolerance ||
+                Math.Abs(cached.Bottom - actual.Bottom) > tolerance;
+            
+            if (positionChanged)
+            {
+                // 图标已移动，清除整个缓存以强制刷新
+                _iconCache.Clear();
+                System.Diagnostics.Debug.WriteLine($"[DesktopIconService] Icon position changed, cache invalidated");
+                return false;
+            }
+            
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// 获取指定索引图标的当前边界 (屏幕坐标)
+    /// </summary>
+    private RECT? GetIconBoundsAtIndex(int index)
+    {
+        if (!IsListViewValid()) return null;
+        
+        try
+        {
+            NativeMethods.GetWindowThreadProcessId(_listViewHandle, out uint explorerPid);
+            using var processHandle = OpenExplorerProcess(explorerPid);
+            if (processHandle == null || processHandle.IsInvalid) return null;
+            
+            int rectSize = Marshal.SizeOf<RECT>();
+            IntPtr remoteRect = NativeMethods.VirtualAllocEx(
+                processHandle.DangerousGetHandle(),
+                IntPtr.Zero,
+                (uint)rectSize,
+                NativeMethods.MEM_COMMIT | NativeMethods.MEM_RESERVE,
+                NativeMethods.PAGE_READWRITE
+            );
+            
+            if (remoteRect == IntPtr.Zero) return null;
+            
+            try
+            {
+                IntPtr localRect = Marshal.AllocHGlobal(rectSize);
+                try
+                {
+                    var rect = new RECT { Left = NativeMethods.LVIR_BOUNDS };
+                    Marshal.StructureToPtr(rect, localRect, false);
+                    
+                    NativeMethods.WriteProcessMemory(
+                        processHandle.DangerousGetHandle(),
+                        remoteRect,
+                        localRect,
+                        (uint)rectSize,
+                        out _
+                    );
+                    
+                    IntPtr result = NativeMethods.SendMessage(
+                        _listViewHandle,
+                        NativeMethods.LVM_GETITEMRECT,
+                        (IntPtr)index,
+                        remoteRect
+                    );
+                    
+                    if (result == IntPtr.Zero) return null;
+                    
+                    NativeMethods.ReadProcessMemory(
+                        processHandle.DangerousGetHandle(),
+                        remoteRect,
+                        localRect,
+                        (uint)rectSize,
+                        out _
+                    );
+                    
+                    var bounds = Marshal.PtrToStructure<RECT>(localRect);
+                    
+                    // 转换为屏幕坐标
+                    var topLeft = new POINT { X = bounds.Left, Y = bounds.Top };
+                    var bottomRight = new POINT { X = bounds.Right, Y = bounds.Bottom };
+                    
+                    NativeMethods.ClientToScreen(_listViewHandle, ref topLeft);
+                    NativeMethods.ClientToScreen(_listViewHandle, ref bottomRight);
+                    
+                    return new RECT
+                    {
+                        Left = topLeft.X,
+                        Top = topLeft.Y,
+                        Right = bottomRight.X,
+                        Bottom = bottomRight.Y
+                    };
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(localRect);
+                }
+            }
+            finally
+            {
+                NativeMethods.VirtualFreeEx(processHandle.DangerousGetHandle(), remoteRect, 0, NativeMethods.MEM_RELEASE);
+            }
+        }
+        catch
+        {
+            return null;
+        }
+    }
+    
+    /// <summary>
     /// 验证 ListView 句柄是否仍然有效
     /// </summary>
     public bool IsListViewValid()
