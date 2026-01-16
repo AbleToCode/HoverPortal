@@ -91,13 +91,15 @@ public partial class PreviewViewModel : ObservableObject
             
             IsEmpty = Files.Count == 0;
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
             // 没有访问权限
+            System.Diagnostics.Debug.WriteLine($"[PreviewViewModel] Unauthorized access: {ex.Message}");
             IsEmpty = true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[PreviewViewModel] Error loading folder: {ex.Message}");
             IsEmpty = true;
         }
     }

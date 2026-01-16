@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using HoverPortal.Effects;
+using HoverPortal.Interop;
 using HoverPortal.ViewModels;
 
 namespace HoverPortal.Views;
@@ -155,14 +156,15 @@ public partial class PreviewWindow : Window
     
     /// <summary>
     /// 窗口源初始化 - 设置无激活窗口样式
-    /// 遵循 dev-rules-1: P/Invoke 调用
+    /// 遵循 dev-rules-1: P/Invoke 调用集中在 NativeMethods
     /// </summary>
     private void Window_SourceInitialized(object sender, EventArgs e)
     {
         // 设置为工具窗口，不在任务栏显示，不抢夺焦点
         var hwnd = new WindowInteropHelper(this).Handle;
-        var extendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-        SetWindowLong(hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
+        var extendedStyle = NativeMethods.GetWindowLong(hwnd, NativeMethods.GWL_EXSTYLE);
+        NativeMethods.SetWindowLong(hwnd, NativeMethods.GWL_EXSTYLE, 
+            extendedStyle | NativeMethods.WS_EX_TOOLWINDOW | NativeMethods.WS_EX_NOACTIVATE);
         
         // 注意: 不调用 AcrylicHelper.EnableBlur() 
         // DWM 亚克力效果会应用于整个矩形窗口，导致出现外部方框
@@ -187,17 +189,4 @@ public partial class PreviewWindow : Window
         e.Handled = true; // 防止事件冒泡触发系统右键菜单
     }
     
-    #region Win32 API
-    
-    private const int GWL_EXSTYLE = -20;
-    private const int WS_EX_TOOLWINDOW = 0x00000080;
-    private const int WS_EX_NOACTIVATE = 0x08000000;
-    
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-    
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-    
-    #endregion
 }

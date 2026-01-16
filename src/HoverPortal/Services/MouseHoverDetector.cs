@@ -41,6 +41,8 @@ public sealed class MouseHoverDetector : IDisposable
     private const int ActivePollIntervalMs = 16;    // 活跃模式: 约 60Hz
     private const int IdlePollIntervalMs = 100;     // 空闲模式: 10Hz
     private const int DefaultHoverThresholdMs = 300; // 默认悬停阈值
+    private const int HideDelayMs = 500;            // 延迟隐藏时间 (0.5秒)
+    private const int IconSwitchDelayMs = 300;      // 切换图标延迟时间 (0.3秒)
     
     // ===== 服务依赖 =====
     private readonly DesktopIconService _iconService;
@@ -52,6 +54,10 @@ public sealed class MouseHoverDetector : IDisposable
     private bool _isHoverTriggered;
     private int _hoverThresholdMs;
     private bool _isDisposed;
+    
+    // ===== 延迟隐藏机制 =====
+    private DispatcherTimer? _hideDelayTimer;
+    private (DesktopIconInfo icon, int screenX, int screenY, DateTime startTime)? _pendingHide;
     
     // ===== 弹出窗口边界追踪 =====
     private RECT? _popupBounds;
@@ -100,6 +106,13 @@ public sealed class MouseHoverDetector : IDisposable
             Interval = TimeSpan.FromMilliseconds(IdlePollIntervalMs)
         };
         _pollTimer.Tick += OnPollTimerTick;
+        
+        // 初始化延迟隐藏计时器
+        _hideDelayTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(HideDelayMs)
+        };
+        _hideDelayTimer.Tick += OnHideDelayTimerTick;
     }
     
     /// <summary>
@@ -173,6 +186,9 @@ public sealed class MouseHoverDetector : IDisposable
     
     private void HandleMouseOnIcon(DesktopIconInfo icon, int screenX, int screenY)
     {
+        // 取消任何挂起的延迟隐藏 (鼠标回到图标上)
+        CancelPendingHide();
+        
         // 验证图标位置是否仍然有效 (检测图标是否被移动)
         if (!_iconService.ValidateIconPosition(icon))
         {
@@ -210,17 +226,16 @@ public sealed class MouseHoverDetector : IDisposable
         }
         else
         {
-            // 切换到新图标，重置状态
+            // 切换到新图标
             if (_isHoverTriggered && _currentHoverIcon != null)
             {
-                // 先触发离开事件
-                RaiseHoverStateChanged(
-                    _currentHoverIcon, 
-                    screenX, 
-                    screenY, 
-                    DateTime.Now - _hoverStartTime, 
-                    isHovering: false
-                );
+                // 使用延迟隐藏旧悬浮框 (0.3秒)
+                _pendingHide = (_currentHoverIcon, screenX, screenY, _hoverStartTime);
+                if (_hideDelayTimer != null)
+                {
+                    _hideDelayTimer.Interval = TimeSpan.FromMilliseconds(IconSwitchDelayMs);
+                    _hideDelayTimer.Start();
+                }
             }
             
             _currentHoverIcon = icon;
@@ -244,18 +259,51 @@ public sealed class MouseHoverDetector : IDisposable
         {
             if (_isHoverTriggered)
             {
-                // 触发离开事件
-                RaiseHoverStateChanged(
-                    _currentHoverIcon,
-                    screenX,
-                    screenY,
-                    DateTime.Now - _hoverStartTime,
-                    isHovering: false
-                );
+                // 启动延迟隐藏计时器 (0.5秒延迟)
+                _pendingHide = (_currentHoverIcon, screenX, screenY, _hoverStartTime);
+                if (_hideDelayTimer != null)
+                {
+                    _hideDelayTimer.Interval = TimeSpan.FromMilliseconds(HideDelayMs);
+                    _hideDelayTimer.Start();
+                }
             }
             
             ResetHoverState();
         }
+    }
+    
+    /// <summary>
+    /// 延迟隐藏计时器回调
+    /// </summary>
+    private void OnHideDelayTimerTick(object? sender, EventArgs e)
+    {
+        // 停止计时器 (单次触发)
+        _hideDelayTimer?.Stop();
+        
+        if (_pendingHide.HasValue)
+        {
+            var (icon, screenX, screenY, startTime) = _pendingHide.Value;
+            
+            // 触发真正的离开事件
+            RaiseHoverStateChanged(
+                icon,
+                screenX,
+                screenY,
+                DateTime.Now - startTime,
+                isHovering: false
+            );
+            
+            _pendingHide = null;
+        }
+    }
+    
+    /// <summary>
+    /// 取消挂起的延迟隐藏
+    /// </summary>
+    private void CancelPendingHide()
+    {
+        _hideDelayTimer?.Stop();
+        _pendingHide = null;
     }
     
     private void ResetHoverState()
@@ -285,6 +333,17 @@ public sealed class MouseHoverDetector : IDisposable
         if (!_isDisposed)
         {
             _pollTimer.Stop();
+            _pollTimer.Tick -= OnPollTimerTick;
+            
+            // 清理延迟隐藏计时器
+            if (_hideDelayTimer != null)
+            {
+                _hideDelayTimer.Stop();
+                _hideDelayTimer.Tick -= OnHideDelayTimerTick;
+                _hideDelayTimer = null;
+            }
+            _pendingHide = null;
+            
             _isDisposed = true;
         }
     }

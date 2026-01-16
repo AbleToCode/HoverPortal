@@ -18,6 +18,10 @@ namespace HoverPortal;
 /// </summary>
 public partial class MainWindow : Window
 {
+    // 预览窗口尺寸常量
+    private const double PreviewWindowWidth = 320;
+    private const double PreviewWindowHeight = 280;
+    
     private PreviewWindow? _previewWindow;
     private MainViewModel? _viewModel;
     private TrayIconService? _trayIconService;
@@ -180,9 +184,9 @@ public partial class MainWindow : Window
             double screenBottom = screenWorkArea.Bottom / dpiScaleY;
             
             // 检查右边界: 如果超出则显示在图标左侧
-            if (left + 320 > screenRight)
+            if (left + PreviewWindowWidth > screenRight)
             {
-                left = iconLeft - 320 - 8;
+                left = iconLeft - PreviewWindowWidth - 8;
             }
             
             // 确保左边界不超出屏幕
@@ -192,9 +196,9 @@ public partial class MainWindow : Window
             }
             
             // 检查下边界
-            if (top + 280 > screenBottom)
+            if (top + PreviewWindowHeight > screenBottom)
             {
-                top = screenBottom - 280 - 8;
+                top = screenBottom - PreviewWindowHeight - 8;
             }
             
             // 确保顶部边界不超出屏幕
@@ -212,8 +216,8 @@ public partial class MainWindow : Window
             // 合并图标区域和弹窗区域
             int unionLeft = Math.Min(icon.Bounds.Left, (int)(left * dpiScaleX)) - safetyMargin;
             int unionTop = Math.Min(icon.Bounds.Top, (int)(top * dpiScaleY)) - safetyMargin;
-            int unionRight = Math.Max(icon.Bounds.Right, (int)((left + 320) * dpiScaleX)) + safetyMargin;
-            int unionBottom = Math.Max(icon.Bounds.Bottom, (int)((top + 280) * dpiScaleY)) + safetyMargin;
+            int unionRight = Math.Max(icon.Bounds.Right, (int)((left + PreviewWindowWidth) * dpiScaleX)) + safetyMargin;
+            int unionBottom = Math.Max(icon.Bounds.Bottom, (int)((top + PreviewWindowHeight) * dpiScaleY)) + safetyMargin;
             
             var popupBounds = new RECT
             {

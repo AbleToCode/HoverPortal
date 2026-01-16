@@ -160,8 +160,9 @@ public sealed class DesktopIconService : IDisposable
             
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[DesktopIconService] ValidateIconPosition error: {ex.Message}");
             return false;
         }
     }
@@ -250,8 +251,9 @@ public sealed class DesktopIconService : IDisposable
                 NativeMethods.VirtualFreeEx(processHandle.DangerousGetHandle(), remoteRect, 0, NativeMethods.MEM_RELEASE);
             }
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[DesktopIconService] GetIconBoundsAtIndex error: {ex.Message}");
             return null;
         }
     }
@@ -318,9 +320,10 @@ public sealed class DesktopIconService : IDisposable
             
             return _iconCache.Count > 0;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // 遵循 dev-rules-1: 异常处理，防止进程崩溃
+            System.Diagnostics.Debug.WriteLine($"[DesktopIconService] RefreshIconCacheInternal error: {ex.Message}");
             return false;
         }
     }
@@ -635,7 +638,10 @@ public sealed class DesktopIconService : IDisposable
                 AddItem(path);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DesktopIconService] Error enumerating user desktop: {ex.Message}");
+        }
         
         // 枚举公共桌面
         try
@@ -645,7 +651,10 @@ public sealed class DesktopIconService : IDisposable
                 AddItem(path);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DesktopIconService] Error enumerating public desktop: {ex.Message}");
+        }
         
 
         return items;

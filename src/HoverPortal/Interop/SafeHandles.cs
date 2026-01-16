@@ -110,6 +110,11 @@ internal static partial class NativeMethods
     public const int LVIR_BOUNDS = 0;
     public const int LVIR_ICON = 1;
     public const int LVIR_LABEL = 2;
+    
+    // ===== 窗口扩展样式常量 =====
+    public const int GWL_EXSTYLE = -20;
+    public const int WS_EX_TOOLWINDOW = 0x00000080;
+    public const int WS_EX_NOACTIVATE = 0x08000000;
 
     
     // ===== P/Invoke 声明 =====
@@ -177,21 +182,17 @@ internal static partial class NativeMethods
     public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, 
         IntPtr lpBuffer, uint nSize, out int lpNumberOfBytesWritten);
     
-    // ===== 结构体定义 (仅供内部 P/Invoke 使用) =====
+    // ===== 窗口样式 API =====
     
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct LVITEMW
-    {
-        public uint mask;
-        public int iItem;
-        public int iSubItem;
-        public uint state;
-        public uint stateMask;
-        public IntPtr pszText;
-        public int cchTextMax;
-        public int iImage;
-        public IntPtr lParam;
-    }
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+    
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+    
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool DestroyIcon(IntPtr hIcon);
 }
 
 // ===== 公共结构体定义 (可被其他程序集使用) =====

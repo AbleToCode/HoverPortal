@@ -5,6 +5,7 @@
 
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using HoverPortal.Services;
 
@@ -29,8 +30,8 @@ namespace HoverPortal
             
             System.Diagnostics.Debug.WriteLine($"[App] Starting with IsSilentStartup={IsSilentStartup}");
             
-            // 同步设置和注册表状态
-            SyncStartupSettings();
+            // 同步设置和注册表状态 (fire-and-forget, 异常已在方法内处理)
+            _ = SyncStartupSettingsAsync();
             
             // 创建并显示主窗口
             var mainWindow = new MainWindow();
@@ -51,8 +52,9 @@ namespace HoverPortal
         /// <summary>
         /// 同步设置和注册表状态
         /// 确保设置文件和注册表的一致性
+        /// 遵循 dev-rules-1: 避免 async void，使用 async Task
         /// </summary>
-        private async void SyncStartupSettings()
+        private async Task SyncStartupSettingsAsync()
         {
             try
             {

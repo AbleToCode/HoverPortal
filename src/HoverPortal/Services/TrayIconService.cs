@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Resources;
 using Hardcodet.Wpf.TaskbarNotification;
+using HoverPortal.Interop;
 using Application = System.Windows.Application;
 
 namespace HoverPortal.Services;
@@ -81,14 +82,15 @@ public class TrayIconService : IDisposable
                 finally
                 {
                     // 释放原生句柄
-                    DestroyIcon(hIcon);
+                    NativeMethods.DestroyIcon(hIcon);
                 }
                 return;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // 忽略加载错误，使用备选图标
+            System.Diagnostics.Debug.WriteLine($"[TrayIconService] Failed to load custom icon: {ex.Message}");
         }
         
         // 备选：使用程序关联图标
@@ -101,14 +103,14 @@ public class TrayIconService : IDisposable
                 return;
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TrayIconService] Failed to extract associated icon: {ex.Message}");
+        }
         
         // 最终备选：默认系统图标
         _taskbarIcon!.Icon = System.Drawing.SystemIcons.Application;
     }
-    
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool DestroyIcon(IntPtr hIcon);
     
     private ContextMenu CreateStyledContextMenu()
     {
