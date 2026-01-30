@@ -154,10 +154,10 @@ public partial class MainWindow : Window
         {
             var icon = e.HoverResult.Icon;
             
-            // 获取 DPI 缩放因子 (遵循 dev-rules-1: 考虑 Windows 版本差异)
-            var source = PresentationSource.FromVisual(this);
-            double dpiScaleX = source?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
-            double dpiScaleY = source?.CompositionTarget?.TransformToDevice.M22 ?? 1.0;
+            // 获取 DPI 缩放因子 (修复: 开机自启隐藏窗口时 PresentationSource 为空导致 DPI 始终为 1.0 的问题)
+            // 使用 Win32 API 直接获取图标所在屏幕的 EXACT DPI
+            var interopPoint = new POINT { X = icon.Bounds.Left, Y = icon.Bounds.Top };
+            var (dpiScaleX, dpiScaleY) = NativeMethods.GetDpiScaleForPoint(interopPoint);
             
             // 将像素坐标转换为 WPF 设备无关单位 (DIU)
             double iconLeft = icon.Bounds.Left / dpiScaleX;
@@ -169,15 +169,13 @@ public partial class MainWindow : Window
             double top = iconTop;
             
             // ===== 多显示器支持 =====
-            // 使用 Screen.FromPoint 获取图标所在的显示器 (遵循 dev-rules-1: 防御性编程)
-            // 注意: Screen.WorkingArea 返回像素坐标，需要转换为 DIU
-            var iconPoint = new System.Drawing.Point(icon.Bounds.Left, icon.Bounds.Top);
-            var currentScreen = System.Windows.Forms.Screen.FromPoint(iconPoint);
+            // 使用 Screen.FromPoint 获取图标所在的显示器以获取工作区
+            var drawingPoint = new System.Drawing.Point(icon.Bounds.Left, icon.Bounds.Top);
+            var currentScreen = System.Windows.Forms.Screen.FromPoint(drawingPoint);
             var screenWorkArea = currentScreen.WorkingArea;
             
             // 将屏幕边界从像素转换为 DIU
-            // 注意: 多显示器可能有不同 DPI，这里使用主显示器 DPI 作为近似值
-            // 如需精确支持，后续可添加 GetDpiForMonitor P/Invoke
+            // 注意: 现在我们使用的是该屏幕实际的 DPI，位置计算将更加准确
             double screenLeft = screenWorkArea.Left / dpiScaleX;
             double screenRight = screenWorkArea.Right / dpiScaleX;
             double screenTop = screenWorkArea.Top / dpiScaleY;
