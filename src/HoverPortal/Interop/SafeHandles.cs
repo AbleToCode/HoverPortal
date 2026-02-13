@@ -51,14 +51,18 @@ public sealed class SafeProcessHandle : SafeHandleZeroOrMinusOneIsInvalid
 
 /// <summary>
 /// 安全封装的远程进程内存分配，确保 VirtualAllocEx 分配的内存被正确释放
+/// 持有对 SafeProcessHandle 的引用 (通过 DangerousAddRef)，防止进程句柄被提前释放
 /// </summary>
 public sealed class SafeRemoteMemoryHandle : SafeHandle
 {
-    private readonly IntPtr _processHandle;
+    private readonly SafeProcessHandle _processHandle;
+    private bool _addedRef;
     
-    public SafeRemoteMemoryHandle(IntPtr processHandle) : base(IntPtr.Zero, true)
+    public SafeRemoteMemoryHandle(SafeProcessHandle processHandle) : base(IntPtr.Zero, true)
     {
-        _processHandle = processHandle;
+        _processHandle = processHandle ?? throw new ArgumentNullException(nameof(processHandle));
+        // 增加引用计数，防止进程句柄在远程内存释放前被关闭
+        _processHandle.DangerousAddRef(ref _addedRef);
     }
 
     public override bool IsInvalid => handle == IntPtr.Zero;
@@ -70,10 +74,22 @@ public sealed class SafeRemoteMemoryHandle : SafeHandle
 
     protected override bool ReleaseHandle()
     {
-        if (handle == IntPtr.Zero || _processHandle == IntPtr.Zero)
-            return true;
-            
-        return NativeMethods.VirtualFreeEx(_processHandle, handle, 0, NativeMethods.MEM_RELEASE);
+        try
+        {
+            if (handle == IntPtr.Zero || _processHandle.IsInvalid || _processHandle.IsClosed)
+                return true;
+                
+            return NativeMethods.VirtualFreeEx(_processHandle.DangerousGetHandle(), handle, 0, NativeMethods.MEM_RELEASE);
+        }
+        finally
+        {
+            // 释放对进程句柄的引用
+            if (_addedRef)
+            {
+                _processHandle.DangerousRelease();
+                _addedRef = false;
+            }
+        }
     }
 }
 

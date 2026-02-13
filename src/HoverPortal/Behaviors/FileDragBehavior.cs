@@ -1,6 +1,7 @@
 // ============================================================================
 // HoverPortal - Drag & Drop Behavior
 // 遵循 dev-rules-1: 使用 Attached Behavior 模式，与 View 解耦
+// 修复 C-3: 使用 per-element 附加属性替代静态字段，消除多实例竞争
 // ============================================================================
 
 using System;
@@ -13,10 +14,11 @@ namespace HoverPortal.Behaviors;
 /// <summary>
 /// 文件拖拽行为
 /// 允许从预览窗口拖出文件到其他应用程序
+/// 每个元素独立追踪拖拽状态，避免多实例竞争
 /// </summary>
 public static class FileDragBehavior
 {
-    // ===== 附加属性 =====
+    // ===== 公开附加属性 =====
     public static readonly DependencyProperty EnableDragProperty =
         DependencyProperty.RegisterAttached(
             "EnableDrag",
@@ -31,16 +33,27 @@ public static class FileDragBehavior
             typeof(FileDragBehavior),
             new PropertyMetadata(null));
     
-    // ===== Getter/Setter =====
+    // ===== 私有 per-element 拖拽状态附加属性 =====
+    private static readonly DependencyProperty DragStartPointProperty =
+        DependencyProperty.RegisterAttached(
+            "DragStartPoint",
+            typeof(Point),
+            typeof(FileDragBehavior),
+            new PropertyMetadata(default(Point)));
+    
+    private static readonly DependencyProperty IsDraggingProperty =
+        DependencyProperty.RegisterAttached(
+            "IsDragging",
+            typeof(bool),
+            typeof(FileDragBehavior),
+            new PropertyMetadata(false));
+    
+    // ===== 公开 Getter/Setter =====
     public static bool GetEnableDrag(DependencyObject obj) => (bool)obj.GetValue(EnableDragProperty);
     public static void SetEnableDrag(DependencyObject obj, bool value) => obj.SetValue(EnableDragProperty, value);
     
     public static object GetDragData(DependencyObject obj) => obj.GetValue(DragDataProperty);
     public static void SetDragData(DependencyObject obj, object value) => obj.SetValue(DragDataProperty, value);
-    
-    // ===== 拖拽状态 =====
-    private static Point _startPoint;
-    private static bool _isDragging;
     
     private static void OnEnableDragChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -62,41 +75,44 @@ public static class FileDragBehavior
     
     private static void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        _startPoint = e.GetPosition(null);
-        _isDragging = false;
+        if (sender is not DependencyObject element) return;
+        element.SetValue(DragStartPointProperty, e.GetPosition(null));
+        element.SetValue(IsDraggingProperty, false);
     }
     
     private static void OnPreviewMouseMove(object sender, MouseEventArgs e)
     {
-        if (e.LeftButton != MouseButtonState.Pressed || _isDragging)
+        if (sender is not DependencyObject element) return;
+        
+        bool isDragging = (bool)element.GetValue(IsDraggingProperty);
+        if (e.LeftButton != MouseButtonState.Pressed || isDragging)
             return;
         
+        var startPoint = (Point)element.GetValue(DragStartPointProperty);
         var position = e.GetPosition(null);
-        var diff = _startPoint - position;
+        var diff = startPoint - position;
         
         // 检查是否超过拖拽阈值
         if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
             Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
         {
-            _isDragging = true;
+            element.SetValue(IsDraggingProperty, true);
             
-            if (sender is DependencyObject element)
+            var dragData = GetDragData(element);
+            
+            if (dragData is FileItem fileItem)
             {
-                var dragData = GetDragData(element);
-                
-                if (dragData is FileItem fileItem)
-                {
-                    StartFileDrag(fileItem);
-                }
+                StartFileDrag(fileItem);
             }
             
-            _isDragging = false;
+            element.SetValue(IsDraggingProperty, false);
         }
     }
     
     private static void OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        _isDragging = false;
+        if (sender is not DependencyObject element) return;
+        element.SetValue(IsDraggingProperty, false);
     }
     
     /// <summary>

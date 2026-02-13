@@ -21,7 +21,7 @@ namespace HoverPortal
         /// </summary>
         public static bool IsSilentStartup { get; private set; }
         
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
             
@@ -30,8 +30,8 @@ namespace HoverPortal
             
             System.Diagnostics.Debug.WriteLine($"[App] Starting with IsSilentStartup={IsSilentStartup}");
             
-            // 同步设置和注册表状态 (fire-and-forget, 异常已在方法内处理)
-            _ = SyncStartupSettingsAsync();
+            // 同步设置和注册表状态 - await 确保设置在服务启动前完成同步
+            await SyncStartupSettingsAsync();
             
             // 创建并显示主窗口
             var mainWindow = new MainWindow();
